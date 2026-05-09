@@ -40,7 +40,13 @@ model VendorProfile {
   id                String  @id @default(cuid())
   userId            String  @unique
   profession        String
-  description       String?
+  description       String? // About
+  yearsOfExperience Int?
+  workHours         String?
+  businessPhone     String?
+  images            String[] @default([])
+  specialties       String[] @default([])
+  
   certificateUrl    String?
   ninVerified       Boolean @default(false)
   ninNumber         String?
