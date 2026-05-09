@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../../lib/db';
+import { prisma } from '../../../utils/db';
 import { UserRole } from '../../../generated/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
