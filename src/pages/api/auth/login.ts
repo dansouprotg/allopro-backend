@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../../utils/db';
+import { generateToken } from '../../../utils/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -36,8 +37,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Return user data without password
     const { password: _, ...userWithoutPassword } = user;
 
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     res.status(200).json({ 
       message: 'Login successful',
+      token,
       user: userWithoutPassword
     });
   } catch (error) {

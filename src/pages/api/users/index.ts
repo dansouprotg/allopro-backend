@@ -1,12 +1,27 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { prisma } from '../../../utils/db';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
-    res.status(200).json({ message: 'Users list endpoint' });
-  } else if (req.method === 'POST') {
-    res.status(200).json({ message: 'Create user endpoint' });
+    try {
+      const users = await prisma.user.findMany({
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          profile: true,
+        },
+      });
+      res.status(200).json({ users });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   } else {
-    res.setHeader('Allow', ['GET', 'POST']);
+    res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 }
