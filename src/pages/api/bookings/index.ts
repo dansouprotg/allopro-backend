@@ -9,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         include: {
           client: { select: { firstName: true, lastName: true } },
           vendor: { select: { firstName: true, lastName: true } },
-          service: true,
         },
       });
       res.status(200).json({ bookings });
