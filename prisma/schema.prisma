@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  firstName   String
+  lastName    String
+  phone       String?
+  role        UserRole @default(CLIENT)
+  isActive    Boolean  @default(true)
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Client specific
+  bookingsAsClient Booking[] @relation("ClientBookings")
+
+  // Vendor specific
+  profile       VendorProfile?
+  bookingsAsVendor Booking[] @relation("VendorBookings")
+  reviews       Review[]
+
+  @@map("users")
+}
+
+model VendorProfile {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  profession        String
+  description       String?
+  certificateUrl    String?
+  ninVerified       Boolean @default(false)
+  ninNumber         String?
+  averageRating     Float   @default(0)
+  totalJobs         Int     @default(0)
+  location          String?
+  latitude          Float?
+  longitude         Float?
+  isAvailable       Boolean @default(true)
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("vendor_profiles")
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  icon        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("services")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  clientId      String
+  vendorId      String
+  serviceId     String
+  status        BookingStatus @default(PENDING)
+  matchingFee   Float
+  totalAmount   Float
+  securityCode  String        @unique
+  clientAddress String
+  clientLat     Float?
+  clientLng     Float?
+  scheduledFor  DateTime?
+  
+  // Timestamps
+  createdAt     DateTime      @default(now())
+  confirmedAt   DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  expiresAt     DateTime      @default(now())
+
+  // Relations
+  client        User          @relation("ClientBookings", fields: [clientId], references: [id])
+  vendor        User          @relation("VendorBookings", fields: [vendorId], references: [id])
+  signIns       SignIn[]
+
+  @@map("bookings")
+}
+
+model SignIn {
+  id        String   @id @default(cuid())
+  bookingId String
+  type      SignInType
+  latitude  Float
+  longitude Float
+  timestamp DateTime @default(now())
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("sign_ins")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  vendorId  String
+  clientId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  vendor    User     @relation(fields: [vendorId], references: [id])
+  
+  @@map("reviews")
+}
+
+enum UserRole {
+  CLIENT
+  VENDOR
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum SignInType {
+  SIGN_IN
+  SIGN_OUT
+}
