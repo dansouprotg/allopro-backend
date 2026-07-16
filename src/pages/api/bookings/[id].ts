@@ -2,16 +2,18 @@ import { NextApiResponse } from 'next';
 import { prisma } from '../../../utils/db';
 import { authenticate, AuthenticatedRequest } from '../../../utils/authMiddleware';
 
-async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse): Promise<void> {
   const userId = req.user?.userId;
   const { id } = req.query;
 
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   if (!id || typeof id !== 'string') {
-    return res.status(400).json({ message: 'Invalid booking ID' });
+    res.status(400).json({ message: 'Invalid booking ID' });
+    return;
   }
 
   try {
@@ -25,23 +27,27 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
     });
 
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      res.status(404).json({ message: 'Booking not found' });
+      return;
     }
 
     // Verify user participates in this booking
     if (booking.clientId !== userId && booking.vendorId !== userId) {
-      return res.status(403).json({ message: 'Forbidden: You do not have access to this booking' });
+      res.status(403).json({ message: 'Forbidden: You do not have access to this booking' });
+      return;
     }
 
     if (req.method === 'GET') {
-      return res.status(200).json({ booking });
+      res.status(200).json({ booking });
+      return;
     }
 
     if (req.method === 'PATCH' || req.method === 'PUT') {
       const { status } = req.body;
 
       if (!status) {
-        return res.status(400).json({ message: 'Missing status field' });
+        res.status(400).json({ message: 'Missing status field' });
+        return;
       }
 
       const updateData: any = { status };
@@ -61,15 +67,18 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
         }
       });
 
-      return res.status(200).json({ booking: updatedBooking });
+      res.status(200).json({ booking: updatedBooking });
+      return;
     }
 
     res.setHeader('Allow', ['GET', 'PATCH', 'PUT']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
 
   } catch (error) {
     console.error('Error handling booking detail request:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Internal server error' });
+    return;
   }
 }
 

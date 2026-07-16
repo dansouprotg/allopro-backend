@@ -2,11 +2,12 @@ import { NextApiResponse } from 'next';
 import { prisma } from '../../../utils/db';
 import { authenticate, AuthenticatedRequest } from '../../../utils/authMiddleware';
 
-async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse): Promise<void> {
   const userId = req.user?.userId;
 
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   if (req.method === 'GET') {
@@ -30,16 +31,19 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       });
 
       res.status(200).json({ bookings });
+      return;
     } catch (error) {
       console.error('Error fetching bookings:', error);
       res.status(500).json({ message: 'Internal server error' });
+      return;
     }
   } else if (req.method === 'POST') {
     try {
       const { vendorId, serviceId, clientAddress, totalAmount } = req.body;
 
       if (!vendorId || !serviceId) {
-        return res.status(400).json({ message: 'Missing required fields: vendorId, serviceId' });
+        res.status(400).json({ message: 'Missing required fields: vendorId, serviceId' });
+        return;
       }
 
       // Generate a unique 6-digit security code for QR verification
@@ -63,13 +67,16 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       });
 
       res.status(201).json({ booking });
+      return;
     } catch (error) {
       console.error('Error creating booking:', error);
       res.status(500).json({ message: 'Internal server error' });
+      return;
     }
   } else {
     res.setHeader('Allow', ['GET', 'POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 }
 

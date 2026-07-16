@@ -2,11 +2,12 @@ import { NextApiResponse } from 'next';
 import { prisma } from '../../../utils/db';
 import { authenticate, AuthenticatedRequest } from '../../../utils/authMiddleware';
 
-async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+async function handler(req: AuthenticatedRequest, res: NextApiResponse): Promise<void> {
   const userId = req.user?.userId;
 
   if (!userId) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   if (req.method === 'GET') {
@@ -58,16 +59,19 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
 
       const conversations = Array.from(conversationsMap.values());
       res.status(200).json({ conversations });
+      return;
     } catch (error) {
       console.error('Error fetching conversations:', error);
       res.status(500).json({ message: 'Internal server error' });
+      return;
     }
   } else if (req.method === 'POST') {
     try {
       const { receiverId, text, bookingId } = req.body;
 
       if (!receiverId || !text || !text.trim()) {
-        return res.status(400).json({ message: 'Missing required fields: receiverId, text' });
+        res.status(400).json({ message: 'Missing required fields: receiverId, text' });
+        return;
       }
 
       // Check if receiver exists
@@ -76,7 +80,8 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       });
 
       if (!receiver) {
-        return res.status(404).json({ message: 'Recipient user not found' });
+        res.status(404).json({ message: 'Recipient user not found' });
+        return;
       }
 
       // Save message
@@ -98,13 +103,16 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
       });
 
       res.status(201).json({ message });
+      return;
     } catch (error) {
       console.error('Error sending message:', error);
       res.status(500).json({ message: 'Internal server error' });
+      return;
     }
   } else {
     res.setHeader('Allow', ['GET', 'POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 }
 
