@@ -33,6 +33,10 @@ model User {
   bookingsAsVendor Booking[] @relation("VendorBookings")
   reviews       Review[]
 
+  // Chat/Messages
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
   @@map("users")
 }
 
@@ -149,4 +153,18 @@ enum BookingStatus {
 enum SignInType {
   SIGN_IN
   SIGN_OUT
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  bookingId  String?
+  senderId   String
+  receiverId String
+  text       String
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
 }
